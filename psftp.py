@@ -26,58 +26,6 @@ class ExceptionPsftpInteraction(ExceptionPexpect):
 
 
 class psftp(spawn):
-    _exception_permission_deined = ExceptionPsftpInteraction(
-        'Permission deined',
-        '(?i)permission denied')
-    _exception_no_such_file = ExceptionPsftpInteraction(
-        'No such file or directory',
-        "Couldn't stat remote file: No such file or directory"
-    )
-    _exception_file_no_found = ExceptionPsftpInteraction(
-        'File no found',
-        'File .* not found\.'
-    )
-    _exception_non_regular_file = ExceptionPsftpInteraction(
-        'Cannot download non-regular file',
-        'Cannot download non-regular file'
-    )
-    _exception_not_directory = ExceptionPsftpInteraction(
-        'Not a directory',
-        'Not a directory'
-    )
-    _exception_file_exists = ExceptionPsftpInteraction(
-        'File exists',
-        'File exists'
-    )
-    _exception_could_not_link = ExceptionPsftpInteraction(
-        "Couldn't link file",
-        "Couldn't link file"
-    )
-    _exception_create_directory_failure = ExceptionPsftpInteraction(
-        "Couldn't create directory: Failure",
-        "Couldn't create directory: Failure"
-    )
-    _exception_delete_failure = ExceptionPsftpInteraction(
-        "Couldn't delete file: Failure",
-        "Couldn't delete file: Failure"
-    )
-    _exception_remove_directory_failed = ExceptionPsftpInteraction(
-        "Couldn't remove directory: Failure",
-        "Couldn't remove directory: Failure"
-    )
-    _exception_ls_not_found = ExceptionPsftpInteraction(
-        "Can't ls. Not found",
-        "Can't ls:.* not found"
-    )
-    _exception_invalid_option = ExceptionPsftpInteraction(
-        'ls: invalid option',
-        'ls: invalid option'
-    )
-    _exception_lumask_failed = ExceptionPsftpInteraction(
-        'You must supply a numeric argument to the lumask command.',
-        'You must supply a numeric argument to the lumask command.'
-    )
-
     """ This class extends pexpect.spawn to specialize setting up sftp
     connections. This add methods for login, logout, interactive commands and
     expecting the shell prompt. It does various tricky things to handle many
@@ -648,3 +596,56 @@ class psftp(spawn):
         return ExceptionPsftpInteraction(
             error,
             cls.__interactive_error_expect[error])
+
+    _exception_permission_deined = ExceptionPsftpInteraction(
+        'Permission deined',
+        '(?i)permission denied')
+    _exception_no_such_file = ExceptionPsftpInteraction(
+        'No such file or directory',
+        "Couldn't stat remote file: No such file or directory"
+    )
+    _exception_file_no_found = ExceptionPsftpInteraction(
+        'File no found',
+        'File .* not found\.'
+    )
+    _exception_non_regular_file = ExceptionPsftpInteraction(
+        'Cannot download non-regular file',
+        'Cannot download non-regular file'
+    )
+    _exception_not_directory = ExceptionPsftpInteraction(
+        'Not a directory',
+        'Not a directory'
+    )
+    _exception_file_exists = ExceptionPsftpInteraction(
+        'File exists',
+        'File exists'
+    )
+    _exception_could_not_link = ExceptionPsftpInteraction(
+        "Couldn't link file",
+        "Couldn't link file"
+    )
+    _exception_create_directory_failure = ExceptionPsftpInteraction(
+        "Couldn't create directory: Failure",
+        "Couldn't create directory: Failure"
+    )
+    _exception_delete_failure = ExceptionPsftpInteraction(
+        "Couldn't delete file: Failure",
+        "Couldn't delete file: Failure"
+    )
+    _exception_remove_directory_failed = ExceptionPsftpInteraction(
+        "Couldn't remove directory: Failure",
+        "Couldn't remove directory: Failure"
+    )
+    _exception_ls_not_found = ExceptionPsftpInteraction(
+        "Can't ls. Not found",
+        "Can't ls:.* not found"
+    )
+    _exception_invalid_option = ExceptionPsftpInteraction(
+        'ls: invalid option',
+        'ls: invalid option'
+    )
+    _exception_lumask_failed = ExceptionPsftpInteraction(
+        'You must supply a numeric argument to the lumask command.',
+        'You must supply a numeric argument to the lumask command.'
+    )
+
