@@ -105,7 +105,6 @@ class psftp(spawn):
             encoding=encoding,
             codec_errors=codec_errors)
         self.name = '<psftp>'
-        self.force_password = False
         self.PROMPT = r"sftp> "
 
         self.SSH_OPTS = ("-o'RSAAuthentication=no'"
@@ -127,7 +126,6 @@ class psftp(spawn):
             port=None,
             ssh_key=None,
             quiet=True,
-            sync_multiplier=1,
             check_local_ip=True):
         '''This logs the user into the given server.
         '''
@@ -147,7 +145,7 @@ class psftp(spawn):
         cmd = "sftp %s %s@%s" % (ssh_options, username, server)
         super(psftp, self)._spawn(cmd)
 
-        first_phase_expect = [
+        phase_expect = [
             "(?i)are you sure you want to continue connecting",
             self.PROMPT,
             "(?i)(?:password)|(?:passphrase for key)",
@@ -156,75 +154,54 @@ class psftp(spawn):
             TIMEOUT,
             "(?i)connection closed by remote host",
             EOF]
-        i = self.expect(first_phase_expect)
+        expected = [False] * len(phase_expect)
+        while True:
+            i = self.expect(phase_expect, timeout=login_timeout)
+            if i == 0:
+                # New certificate -- always accept it.
+                # This is what you get if SSH does not have the remote host's
+                # public key stored in the 'known_hosts' cache.
+                assert not expected[i]
+                expected[i] = True
+                self.sendline("yes")
+            elif i == 1:
+                # can occur if you have a public key pair set to authenticate.
+                break
+            elif i == 2:
+                assert not expected[i]
+                expected[i] = True
+                self.sendline(password)
+            elif i == 3:
+                # permission denied -- password was bad.
+                self.close()
+                raise ExceptionPsftpLocal('permission denied')
+            elif i == 4:
+                assert not expected[i]
+                expected[i] = True
+                self.sendline(terminal_type)
+            elif i == 5:
+                # Timeout
+                # This is tricky. I presume that we are at the command-line
+                # prompt. It may be that the shell prompt was so weird that we
+                # couldn't match it. Or it may be that we couldn't log in for
+                # some other reason. I can't be sure, but it's safe to guess
+                # that we did login because if I presume wrong and we are not
+                # logged in then this should be caught later when I try to set
+                # the shell prompt.
+                break
+            elif i == 6:
+                # Connection closed by remote host
+                self.close()
+                raise ExceptionPsftpLocal('connection closed')
+            elif i == 7:
+                self.close()
+                raise ExceptionPsftpLocal(
+                    'Could not establish connection to host')
+            else:
+                # Unexpected
+                self.close()
+                raise ExceptionPsftpLocal('unexpected login response')
 
-        second_phase_expect = [
-            "(?i)are you sure you want to continue connecting",
-            self.PROMPT,
-            "(?i)(?:password)|(?:passphrase for key)",
-            "(?i)permission denied",
-            "(?i)terminal type",
-            TIMEOUT]
-
-        # First phase
-        if i == 0:
-            # New certificate -- always accept it.
-            # This is what you get if SSH does not have the remote host's
-            # public key stored in the 'known_hosts' cache.
-            self.sendline("yes")
-        if i == 2:  # password or passphrase
-            self.sendline(password)
-            i = self.expect(second_phase_expect)
-        if i == 4:
-            self.sendline(terminal_type)
-            i = self.expect(second_phase_expect)
-        if i == 7:
-            self.close()
-            raise ExceptionPsftpLocal('Could not establish connection to host')
-
-        # Second phase
-        if i == 0:
-            # This is weird. This should not happen twice in a row.
-            self.close()
-            raise ExceptionPsftpLocal(
-                'Weird error. Got "are you sure" prompt twice.')
-        elif i == 1:
-            # can occur if you have a public key pair set to authenticate.
-            pass
-        elif i == 2:
-            # password prompt again
-            # For incorrect passwords, some ssh servers will
-            # ask for the password again, others return 'denied' right away.
-            # If we get the password prompt again then this means
-            # we didn't get the password right the first time.
-            self.close()
-            raise ExceptionPsftpLocal('password refused')
-        elif i == 3:
-            # permission denied -- password was bad.
-            self.close()
-            raise ExceptionPsftpLocal('permission denied')
-        elif i == 4:
-            # terminal type again?
-            self.close()
-            raise ExceptionPsftpLocal(
-                'Weird error. Got "terminal type" prompt twice.')
-        elif i == 5:
-            # Timeout
-            # This is tricky. I presume that we are at the command-line prompt.
-            # It may be that the shell prompt was so weird that we couldn't
-            # match it. Or it may be that we couldn't log in for some other
-            # reason. I can't be sure, but it's safe to guess that we did
-            # login because if # I presume wrong and we are not logged in then
-            # this should be caught later when I try to set the shell prompt.
-            pass
-        elif i == 6:
-            # Connection closed by remote host
-            self.close()
-            raise ExceptionPsftpLocal('connection closed')
-        else:
-            # Unexpected
-            self.close()
-            raise ExceptionPsftpLocal('unexpected login response')
         return True
 
     def logout(self):
