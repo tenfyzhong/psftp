@@ -7,7 +7,7 @@ automatically.
 import psftp
 import getpass
 try:
-    s = psftp.sftp()
+    s = psftp.psftp()
     hostname = raw_input('hostname: ')
     username = raw_input('username: ')
     password = getpass.getpass('password: ')
